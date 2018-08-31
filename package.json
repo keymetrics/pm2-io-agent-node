@@ -1,0 +1,26 @@
+{
+  "name": "pm2-io-agent-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keymetrics/pm2-io-agent-node.git"
+  },
+  "author": "Keymetrics <contact@keymetrics.io>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/keymetrics/pm2-io-agent-node/issues"
+  },
+  "homepage": "https://github.com/keymetrics/pm2-io-agent-node#readme",
+  "engines": {
+    "node": ">=8.0"
+  },
+  "dependencies": {
+    "debug": "^3.1.0",
+    "ws": "^6.0.0"
+  }
+}
