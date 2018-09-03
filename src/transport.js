@@ -1,21 +1,25 @@
 'use strict'
 
 const WebSocket = require('ws')
+const EventEmitter2 = require('eventemitter2').EventEmitter2
 const debug = require('debug')('agent:transport')
 
-module.exports = class WebsocketTransport {
+module.exports = class WebsocketTransport extends EventEmitter2 {
   /**
    * Construct new websocket instance for specific endpoint
    * @param {Object} headers Key-value with upgrade headers
    * @param {String} endpoint Websocket endpoint
    */
   constructor (endpoint, headers) {
+    super({
+      wildcard: true,
+      delimiter: ':'
+    })
     debug(`Init new websocket transport with endpoint: ${endpoint} and headers: [${Object.keys(headers).map(header => `${header}: ${headers[header]}`).join(',')}]`)
     this.endpoint = endpoint
     this.headers = headers
     this.ws = null
     this.pingInterval = null
-    this.listeners = {}
   }
 
   /**
@@ -73,8 +77,7 @@ module.exports = class WebsocketTransport {
       return debug(`Get non-JSON data from websocket server: ${rawData}`)
     }
     if (!data.channel || !data.payload) return debug(`Get bad message from websocket server: ${rawData}`)
-    if (!this.listeners[data.channel]) return false
-    return this.listeners[data.channel].forEach(fn => fn(data.payload))
+    return this.emit(data.channel, data.payload)
   }
 
   /**
@@ -108,34 +111,6 @@ module.exports = class WebsocketTransport {
     if (!packet.channel || !packet.payload) return false
     this.ws.send(JSON.stringify(packet))
     return true
-  }
-
-  /**
-   * Listen messages from websocket server
-   * @param {String} event Channel to listen
-   * @param {Function} cb To invoke
-   */
-  listen (event, cb) {
-    if (!this.listeners[event]) this.listeners[event] = []
-    return this.listeners[event].push(cb)
-  }
-
-  /**
-   * Stop listening specific event
-   * @param {String} event Channel to stop listening
-   * @param {Function} [cb]
-   */
-  unlisten (event, cb) {
-    if (!this.listeners[event]) return null
-    if (!cb) {
-      this.listeners[event] = [] // Stop listening this event
-      return []
-    }
-    let indexToRemove = -1
-    this.listeners[event].forEach((fn, index) => {
-      if (fn === cb) indexToRemove = index
-    })
-    return this.listeners.splice(indexToRemove, 1)
   }
 
   /**
