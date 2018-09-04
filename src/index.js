@@ -17,15 +17,16 @@ module.exports = class Agent {
    * @param {Function} cb Invoked with <err, agent>
    */
   constructor (config, proc, cb) {
-    debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
     // Valid config
     if (!config ||
       typeof config.publicKey !== 'string' ||
       typeof config.secretKey !== 'string' ||
       typeof config.appName !== 'string' ||
       typeof proc !== 'object') {
-      return cb(new Error('You need to provide a valid configuration and process!'))
+      const err = new Error('You need to provide a valid configuration and process!')
+      return cb ? cb(err) : err
     }
+    debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
 
     // Trying to check infos
     this.checkCredentials(config, (err, endpoints) => {
@@ -52,7 +53,7 @@ module.exports = class Agent {
         // Start sending status
         this.statusInterval = setInterval(this.sendStatus.bind(this), 1 * 1000) // each second
 
-        return cb(null, this.transport)
+        return cb(null, this)
       })
     })
   }

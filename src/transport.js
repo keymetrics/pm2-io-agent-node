@@ -45,6 +45,7 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
       this.ws.on('close', this.onClose.bind(this))
       // We don't handle errors (DNS issues...), ping will close/reopen if any error is found
       this.ws.on('error', err => debug(`Got an error with websocket connection: ${err.message}`))
+      if (this.pingInterval) clearInterval(this.pingInterval)
       this.pingInterval = setInterval(this.ping.bind(this), 30 * 1000) // 30 seconds
       return cb(null, this.ws)
     })

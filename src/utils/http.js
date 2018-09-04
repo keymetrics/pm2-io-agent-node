@@ -11,7 +11,7 @@ module.exports = class HTTPClient {
    * @param {String} url
    */
   static getModule (url) {
-    return url.match(/https:\/\//) ? require('https') : require('http')
+    return url.indexOf('https://') === 0 ? require('https') : require('http')
   }
   /**
    * Send an HTTP request and return data or error if status > 200
