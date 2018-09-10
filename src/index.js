@@ -135,6 +135,25 @@ module.exports = class Agent {
 
   /**
    * Send status
+   * @param {String} channel
+   * @param {Object} payload
+   */
+  async send (channel, payload) {
+    return this.transport.send({
+      channel,
+      payload: {
+        ...payload,
+        process: {
+          pm_id: 0,
+          name: this.config.appName,
+          server: this.config.appName
+        }
+      }
+    })
+  }
+
+  /**
+   * Send status
    */
   async sendStatus () {
     return this.transport.send({
