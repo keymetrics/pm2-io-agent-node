@@ -27,33 +27,40 @@ module.exports = class Agent {
       return cb ? cb(err) : err
     }
     debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
+    this.config = config
+    proc.unique_id = this.generateUniqueId()
+    this.process = proc
+  }
 
-    // Trying to check infos
-    this.checkCredentials(config, (err, endpoints) => {
-      if (err) return cb(err)
+  /**
+   * Check credentials and start agent
+   */
+  async start () {
+    return new Promise((resolve, reject) => {
+      // Trying to check infos
+      this.checkCredentials(this.config, (err, endpoints) => {
+        if (err) return reject(err)
 
-      // Connect to websocket
-      this.transport = new Transport(endpoints.ws, {
-        'X-KM-PUBLIC': config.publicKey,
-        'X-KM-SECRET': config.secretKey,
-        'X-KM-SERVER': config.appName,
-        'X-PM2-VERSION': cst.PM2_VERSION,
-        'X-PROTOCOL-VERSION': cst.PROTOCOL_VERSION
-      })
-      return this.transport.connect((err) => {
-        if (err) return cb(err)
+        // Connect to websocket
+        this.transport = new Transport(endpoints.ws, {
+          'X-KM-PUBLIC': this.config.publicKey,
+          'X-KM-SECRET': this.config.secretKey,
+          'X-KM-SERVER': this.config.appName,
+          'X-PM2-VERSION': cst.PM2_VERSION,
+          'X-PROTOCOL-VERSION': cst.PROTOCOL_VERSION
+        })
+        return this.transport.connect((err) => {
+          if (err) return reject(err)
 
-        // Store config
-        this.config = config
-        this.config.endpoint = endpoints.ws
-        this.config.internalIp = meta.computeInternalIp()
-        proc.unique_id = this.generateUniqueId()
-        this.process = proc
+          // Store config
+          this.config.endpoint = endpoints.ws
+          this.config.internalIp = meta.computeInternalIp()
 
-        // Start sending status
-        this.statusInterval = setInterval(this.sendStatus.bind(this), 1 * 1000) // each second
+          // Start sending status
+          this.statusInterval = setInterval(this.sendStatus.bind(this), 1 * 1000) // each second
 
-        return cb(null, this)
+          return resolve()
+        })
       })
     })
   }
