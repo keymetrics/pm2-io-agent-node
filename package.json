@@ -1,7 +1,7 @@
 {
-  "name": "pm2-io-agent-node",
+  "name": "@pm2/agent-node",
   "version": "1.0.0",
-  "description": "",
+  "description": "PM2.io Agent Standalone for NodeJS",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
