@@ -30,6 +30,7 @@ module.exports = class Agent {
     this.config = config
     proc.unique_id = this.generateUniqueId()
     this.process = proc
+    this.sendLogs = false // Options to override startLogging and stopLogging
   }
 
   /**
@@ -58,6 +59,7 @@ module.exports = class Agent {
 
           // Start sending status
           this.statusInterval = setInterval(this.sendStatus.bind(this), 1 * 1000) // each second
+          this.listenForLogs()
 
           return resolve()
         })
@@ -153,10 +155,65 @@ module.exports = class Agent {
         process: {
           pm_id: 0,
           name: this.config.appName,
-          server: this.config.appName
+          server: this.config.appName,
+          rev: null
         }
       }
     })
+  }
+
+  /**
+   * Listen stdout and stderr to send logs
+   */
+  listenForLogs () {
+    const send = this.send.bind(this, 'logs')
+    let sendLogs = false // used for startLogging and stopLogging
+
+    // Listen actions
+    const reply = method => {
+      this.transport.send({
+        channel: 'trigger:pm2:result',
+        payload: {
+          ret: { err: null, data: `Log streaming ${sendLogs ? 'enabled' : 'disabled'}` },
+          meta: {
+            method_name: method,
+            app_name: this.config.appName,
+            machine_name: this.config.appName,
+            public_key: this.config.publicKey
+          }
+        }
+      })
+    }
+    this.transport.on('trigger:pm2:action', (data) => {
+      const method = data.method_name
+      if (!['startLogging', 'stopLogging'].includes(method)) return // Don't listen that
+      sendLogs = method === 'startLogging'
+      debug(`${method} triggered`)
+      return reply(method)
+    })
+
+    // Listen logs
+    process.stdout.write = (function (write) {
+      return function (...args) {
+        write.apply(process.stdout, args)
+        if (!this.sendLogs && !sendLogs) return // Don't send logs
+        send({
+          at: new Date().getTime(),
+          data: args[0]
+        })
+      }
+    }(process.stdout.write))
+
+    process.stderr.write = (function (write) {
+      return function (...args) {
+        write.apply(process.stderr, args)
+        if (!this.sendLogs && !sendLogs) return // Don't send logs
+        send({
+          at: new Date().getTime(),
+          data: args[0]
+        })
+      }
+    }(process.stderr.write))
   }
 
   /**
