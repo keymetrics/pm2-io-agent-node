@@ -1,6 +1,6 @@
 {
   "name": "@pm2/agent-node",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PM2.io Agent Standalone for NodeJS",
   "main": "index.js",
   "scripts": {
