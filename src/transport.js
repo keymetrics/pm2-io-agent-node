@@ -99,6 +99,7 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
     })
     this.ws.on('pong', _ => {
       clearTimeout(timeout)
+      this.ws.removeEventListener('pong')
       return debug('Websocket server has replied to ping!')
     })
   }
