@@ -1,6 +1,7 @@
 'use strict'
 
 const debug = require('debug')('agent:main')
+const os = require('os')
 const http = require('./utils/http')
 const cst = require('../constants')
 const meta = require('./utils/meta')
@@ -27,6 +28,7 @@ module.exports = class Agent {
       return cb ? cb(err) : err
     }
     debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
+    config.serverName = os.hostname().toLowerCase()
     this.config = config
     proc.unique_id = this.generateUniqueId()
     this.process = proc
@@ -46,7 +48,7 @@ module.exports = class Agent {
         this.transport = new Transport(endpoints.ws, {
           'X-KM-PUBLIC': this.config.publicKey,
           'X-KM-SECRET': this.config.secretKey,
-          'X-KM-SERVER': this.config.appName,
+          'X-KM-SERVER': this.config.serverName,
           'X-PM2-VERSION': cst.PM2_VERSION,
           'X-PROTOCOL-VERSION': cst.PROTOCOL_VERSION
         })
@@ -131,7 +133,7 @@ module.exports = class Agent {
       data: {
         public_id: config.publicKey,
         private_id: config.secretKey,
-        data: meta(config.publicKey, config.appName)
+        data: meta(config.publicKey, config.serverName)
       }
     }, (err, data) => {
       if (err) return cb(err)
@@ -155,7 +157,7 @@ module.exports = class Agent {
         process: {
           pm_id: 0,
           name: this.config.appName,
-          server: this.config.appName,
+          server: this.config.serverName,
           rev: null
         }
       }
@@ -178,7 +180,7 @@ module.exports = class Agent {
           meta: {
             method_name: method,
             app_name: this.config.appName,
-            machine_name: this.config.appName,
+            machine_name: this.config.serverName,
             public_key: this.config.publicKey
           }
         }
@@ -227,7 +229,7 @@ module.exports = class Agent {
           process: [this.generateProcess(this.process)],
           server: meta.getServerMeta()
         },
-        server_name: this.config.appName,
+        server_name: this.config.serverName,
         internal_ip: this.config.internalIp,
         rev_con: true
       }
