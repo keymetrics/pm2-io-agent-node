@@ -63,6 +63,9 @@ module.exports = class Agent {
           this.statusInterval = setInterval(this.sendStatus.bind(this), 1 * 1000) // each second
           this.listenForLogs()
 
+          // Listening for endpoint update
+          this.endpointUpdateInterval = setInterval(this.listenEndpointUpdate.bind(this), 5 * 60 * 1000) // each 5 min
+
           return resolve()
         })
       })
@@ -116,6 +119,26 @@ module.exports = class Agent {
       axm_options: proc.axm_options || {},
       axm_dynamic: proc.dynamic || {}
     }
+  }
+
+  /**
+   * Ping root.keymetrics.io, compare current endpoint, and reconnect agent if needed
+   */
+  listenEndpointUpdate () {
+    debug(`Check if endpoint was updated`)
+    this.checkCredentials(this.config, (err, endpoints) => {
+      if (err) return debug(`Got an error on check credentials: ${err.message}`)
+      if (endpoints.ws === this.config.endpoint) return debug(`Endpoint wasn't updated`)
+
+      // Update transport endpoint
+      this.config.endpoint = endpoints.ws
+      this.transport.endpoint = endpoints.ws
+      this.transport.disconnect()
+      this.transport.connect((err) => {
+        if (err) return debug(`Got an error on websocket connection while endpoint update: ${err.message}`)
+        return debug(`Websocket endpoint updated!`)
+      })
+    })
   }
 
   /**

@@ -10,7 +10,8 @@ const agent = new Agent({ // eslint-disable-line
   publicKey: 'zftc3kf0ehy12bo',
   secretKey: 'ptcsyi1n6chf9qs',
   appName: 'agent-node'
-}, proc, (err, agent) => {
+}, proc)
+agent.start((err) => {
   if (err) return console.error(err)
   // Add some custom actions
   setTimeout(_ => proc.axm_actions.push({action_name: 'lol', action_type: 'pm2'}), 10000)
