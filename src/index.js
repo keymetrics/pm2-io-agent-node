@@ -14,6 +14,7 @@ module.exports = class Agent {
    * @param {String} config.publicKey
    * @param {String} config.secretKey
    * @param {String} config.appName
+   * @param {String} [config.serverName]
    * @param {Object} process Process to send
    * @param {Function} cb Invoked with <err, agent>
    */
@@ -28,7 +29,7 @@ module.exports = class Agent {
       return cb ? cb(err) : err
     }
     debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
-    config.serverName = os.hostname().toLowerCase()
+    if (!config.serverName) config.serverName = os.hostname().toLowerCase()
     this.config = config
     proc.unique_id = this.generateUniqueId()
     this.process = proc
