@@ -11,8 +11,9 @@ const agent = new Agent({ // eslint-disable-line
   secretKey: 'ptcsyi1n6chf9qs',
   appName: 'agent-node'
 }, proc)
-agent.start((err) => {
-  if (err) return console.error(err)
+
+const init = async _ => {
+  await agent.start()
   // Add some custom actions
   setTimeout(_ => proc.axm_actions.push({action_name: 'lol', action_type: 'pm2'}), 10000)
   // Listen
@@ -22,5 +23,6 @@ agent.start((err) => {
   setTimeout(_ => agent.transport.removeListener('trigger:pm2:action', listener), 10000)
   // Send packet
   agent.transport.send('exception', {key: 'value'})
-  return console.log('done.')
-})
+  console.log('done.')
+}
+init()

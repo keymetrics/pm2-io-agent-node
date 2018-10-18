@@ -34,6 +34,8 @@ module.exports = class Agent {
     proc.unique_id = this.generateUniqueId()
     this.process = proc
     this.sendLogs = false // Options to override startLogging and stopLogging
+    // Init transport (listen event emitter even if an error occur)
+    this.transport = new Transport()
   }
 
   /**
@@ -46,7 +48,7 @@ module.exports = class Agent {
         if (err) return reject(err)
 
         // Connect to websocket
-        this.transport = new Transport(endpoints.ws, {
+        this.transport.setConfig(endpoints.ws, {
           'X-KM-PUBLIC': this.config.publicKey,
           'X-KM-SECRET': this.config.secretKey,
           'X-KM-SERVER': this.config.serverName,
@@ -70,6 +72,9 @@ module.exports = class Agent {
           return resolve()
         })
       })
+    }).catch(err => {
+      debug(`Got an error on start pm2-agent-node: ${err.message}, retrying in 5sec...`)
+      return setTimeout(this.start.bind(this), 5 * 1000)
     })
   }
 

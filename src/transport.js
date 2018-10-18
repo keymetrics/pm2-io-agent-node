@@ -7,19 +7,27 @@ const debug = require('debug')('agent:transport')
 module.exports = class WebsocketTransport extends EventEmitter2 {
   /**
    * Construct new websocket instance for specific endpoint
-   * @param {Object} headers Key-value with upgrade headers
-   * @param {String} endpoint Websocket endpoint
    */
-  constructor (endpoint, headers) {
+  constructor () {
     super({
       wildcard: true,
       delimiter: ':'
     })
+    this.endpoint = null
+    this.headers = null
+    this.ws = null
+    this.pingInterval = null
+  }
+
+  /**
+   * Set config for instance
+   * @param {Object} headers Key-value with upgrade headers
+   * @param {String} endpoint Websocket endpoint
+   */
+  setConfig (endpoint, headers) {
     debug(`Init new websocket transport with endpoint: ${endpoint} and headers: [${Object.keys(headers).map(header => `${header}: ${headers[header]}`).join(',')}]`)
     this.endpoint = endpoint
     this.headers = headers
-    this.ws = null
-    this.pingInterval = null
   }
 
   /**
@@ -28,11 +36,16 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
    */
   connect (cb) {
     debug('Connect transporter to websocket server')
-    this.ws = new WebSocket(this.endpoint, {
-      perMessageDeflate: false,
-      handshakeTimeout: 5 * 1000, // 5 seconds
-      headers: this.headers
-    })
+
+    try {
+      this.ws = new WebSocket(this.endpoint, {
+        perMessageDeflate: false,
+        handshakeTimeout: 5 * 1000, // 5 seconds
+        headers: this.headers
+      })
+    } catch (e) {
+      return cb(e)
+    }
 
     const onError = (err) => {
       this.ws.removeAllListeners()
