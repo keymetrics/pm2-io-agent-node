@@ -6,7 +6,6 @@ const http = require('./utils/http')
 const cst = require('../constants')
 const meta = require('./utils/meta')
 const Transport = require('./transport')
-const ProxyAgent = require('proxy-agent')
 
 module.exports = class Agent {
   /**
@@ -176,7 +175,7 @@ module.exports = class Agent {
         private_id: config.secretKey,
         data: meta(config.publicKey, config.serverName)
       },
-      agent: typeof config.proxy !== 'undefined' ? new ProxyAgent(config.proxy) : undefined
+      proxy: config.proxy
     }, (err, data) => {
       if (err) return cb(err)
       if (data.disabled === true || data.pending === true) return cb(new Error('Interactor disabled.'))
