@@ -6,6 +6,7 @@ const http = require('./utils/http')
 const cst = require('../constants')
 const meta = require('./utils/meta')
 const Transport = require('./transport')
+const ProxyAgent = require('proxy-agent')
 
 module.exports = class Agent {
   /**
@@ -16,17 +17,17 @@ module.exports = class Agent {
    * @param {String} config.appName
    * @param {String} [config.serverName]
    * @param {Object} process Process to send
-   * @param {Function} cb Invoked with <err, agent>
    */
-  constructor (config, proc, cb) {
+  constructor (config, proc) {
     // Valid config
     if (!config ||
       typeof config.publicKey !== 'string' ||
       typeof config.secretKey !== 'string' ||
       typeof config.appName !== 'string' ||
+      (typeof config.proxy !== 'undefined' && config.proxy !== 'string') ||
       typeof proc !== 'object') {
       const err = new Error('You need to provide a valid configuration and process!')
-      return cb ? cb(err) : err
+      return err
     }
     debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
     if (!config.serverName) config.serverName = os.hostname().toLowerCase()
@@ -45,7 +46,10 @@ module.exports = class Agent {
     return new Promise((resolve, reject) => {
       // Trying to check infos
       this.checkCredentials(this.config, (err, endpoints) => {
-        if (err) return reject(err)
+        if (err) {
+          this.restartOnError(err)
+          return reject(err)
+        }
 
         // Connect to websocket
         this.transport.setConfig(endpoints.ws, {
@@ -54,9 +58,12 @@ module.exports = class Agent {
           'X-KM-SERVER': this.config.serverName,
           'X-PM2-VERSION': cst.PM2_VERSION,
           'X-PROTOCOL-VERSION': cst.PROTOCOL_VERSION
-        })
+        }, this.config.proxy)
         return this.transport.connect((err) => {
-          if (err) return reject(err)
+          if (err) {
+            this.restartOnError(err)
+            return reject(err)
+          }
 
           // Store config
           this.config.endpoint = endpoints.ws
@@ -72,10 +79,15 @@ module.exports = class Agent {
           return resolve()
         })
       })
-    }).catch(err => {
-      debug(`Got an error on start pm2-agent-node: ${err.message}, retrying in 5sec...`)
-      return setTimeout(this.start.bind(this), 5 * 1000)
     })
+  }
+
+  /**
+   * Restart agent because of an error
+   */
+  restartOnError (err) {
+    debug(`Got an error on start pm2-agent-node: ${err.message}, retrying in 5sec...`)
+      return setTimeout(this.start.bind(this), 5 * 1000)
   }
 
   /**
@@ -108,7 +120,7 @@ module.exports = class Agent {
       created_at: proc.createdAt,
       exec_mode: 'fork_mode',
       watching: false,
-      pm_uptime: process.uptime(),
+      pm_uptime: proc.createdAt,
       status: 'online',
       pm_id: 0,
       unique_id: proc.unique_id,
@@ -118,7 +130,7 @@ module.exports = class Agent {
 
       versioning: proc.versioning || null,
 
-      node_env: process.NODE_ENV || null,
+      node_env: process.env.NODE_ENV || null,
 
       axm_actions: proc.axm_actions || [],
       axm_monitor: proc.axm_monitor || {},
@@ -163,7 +175,8 @@ module.exports = class Agent {
         public_id: config.publicKey,
         private_id: config.secretKey,
         data: meta(config.publicKey, config.serverName)
-      }
+      },
+      agent: typeof config.proxy !== 'undefined' ? new ProxyAgent(config.proxy) : undefined
     }, (err, data) => {
       if (err) return cb(err)
       if (data.disabled === true || data.pending === true) return cb(new Error('Interactor disabled.'))

@@ -2,6 +2,7 @@
 
 const WebSocket = require('ws')
 const EventEmitter2 = require('eventemitter2').EventEmitter2
+const ProxyAgent = require('proxy-agent')
 const debug = require('debug')('agent:transport')
 
 module.exports = class WebsocketTransport extends EventEmitter2 {
@@ -23,11 +24,13 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
    * Set config for instance
    * @param {Object} headers Key-value with upgrade headers
    * @param {String} endpoint Websocket endpoint
+   * @param {String} proxy Proxy
    */
-  setConfig (endpoint, headers) {
+  setConfig (endpoint, headers, proxy) {
     debug(`Init new websocket transport with endpoint: ${endpoint} and headers: [${Object.keys(headers).map(header => `${header}: ${headers[header]}`).join(',')}]`)
     this.endpoint = endpoint
     this.headers = headers
+    this.proxy = proxy
   }
 
   /**
@@ -41,7 +44,8 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
       this.ws = new WebSocket(this.endpoint, {
         perMessageDeflate: false,
         handshakeTimeout: 5 * 1000, // 5 seconds
-        headers: this.headers
+        headers: this.headers,
+        agent: typeof this.proxy !== 'undefined' ? new ProxyAgent(this.proxy) : undefined
       })
     } catch (e) {
       return cb(e)
