@@ -17,10 +17,11 @@ const createAgent = (proc, cb) => {
   let tmp = Agent.prototype.checkCredentials
   Agent.prototype.checkCredentials = (config, cb) => cb(null, {ws: 'endpoint'})
   let config = {publicKey: 'public', secretKey: 'secret', appName: 'app'}
-  new Agent(config, proc || {}, (err, agent) => cb(agent, (done) => { // eslint-disable-line
+  let agent = new Agent(config, proc || {})
+  return cb(agent, next => {
     Agent.prototype.checkCredentials = tmp
-    return done()
-  })) // eslint-disable-line
+    next()
+  })
 }
 
 describe('Agent', _ => {
@@ -38,41 +39,52 @@ describe('Agent', _ => {
     it('should fail check credentials', (done) => {
       let tmp = Agent.prototype.checkCredentials
       Agent.prototype.checkCredentials = (config, cb) => cb(new Error('Test error'))
-      let agent = new Agent({publicKey: 'public', secretKey: 'secret', appName: 'app'}, {}, (err) => { // eslint-disable-line
+      let agent = new Agent({publicKey: 'public', secretKey: 'secret', appName: 'app'}, {})
+      assert(!(agent instanceof Error))
+      agent.start().then(e => {
+        console.log(e)
+        done(new Error('agent started'))
+      }).catch(err => {
         assert(err instanceof Error)
-        Agent.prototype.checkCredentials = tmp
-        return done()
+        done()
       })
+      Agent.prototype.checkCredentials = tmp
     })
     it('should fail transport connect', (done) => {
       transport.prototype.connect = (cb) => cb(new Error('Test error'))
       module.exports = transport
       let tmp = Agent.prototype.checkCredentials
       Agent.prototype.checkCredentials = (config, cb) => cb(null, {ws: 'endpoint'})
-      let agent = new Agent({publicKey: 'public', secretKey: 'secret', appName: 'app'}, {}, (err) => { // eslint-disable-line
+      let agent = new Agent({publicKey: 'public', secretKey: 'secret', appName: 'app'}, {})
+      assert(!(agent instanceof Error))
+      agent.start().then(_ => {
+        done(new Error('correctly connected'))
+      }).catch(err => {
         assert(err instanceof Error)
-        Agent.prototype.checkCredentials = tmp
-        return done()
+        done()
       })
+      Agent.prototype.checkCredentials = tmp
     })
-    it('should save config and start sending status', (done) => {
+    it('should save config', (done) => {
       transport.prototype.connect = (cb) => cb()
       module.exports = transport
       let tmp = Agent.prototype.checkCredentials
       Agent.prototype.checkCredentials = (config, cb) => cb(null, {ws: 'endpoint'})
       let config = {publicKey: 'public', secretKey: 'secret', appName: 'app'}
-      new Agent(config, {}, (err, agent) => { // eslint-disable-line
-        assert(err === null)
+      let agent = new Agent(config, {})
+      assert(!(agent instanceof Error))
+      agent.start().then(_ => {
         assert(agent.transport instanceof transport)
         assert(agent.config.publicKey === config.publicKey)
         assert(agent.config.secretKey === config.secretKey)
         assert(agent.config.appName === config.appName)
-        assert(agent.config.endpoint === 'endpoint')
         assert(typeof agent.config.internalIp === 'string')
         assert(typeof agent.process.unique_id === 'string')
         clearInterval(agent.statusInterval)
         Agent.prototype.checkCredentials = tmp
-        return done()
+        done()
+      }).catch(err => {
+        done(err)
       })
     })
   })
@@ -88,7 +100,6 @@ describe('Agent', _ => {
     })
   })
   describe('generateProcess', _ => {
-    let date = null
     it('should add created at', (done) => {
       createAgent((agent, next) => {
         let proc = agent.generateProcess(agent.process)
@@ -96,8 +107,7 @@ describe('Agent', _ => {
         assert(proc.name === agent.config.appName)
         assert(proc.interpreter === 'node')
         assert(proc.restart_time === 0)
-        assert(proc.created_at instanceof Date)
-        date = proc.created_at
+        assert(typeof proc.created_at === 'number')
         assert(proc.exec_mode === 'fork_mode')
         assert(proc.watching === false)
         assert(typeof proc.pm_uptime === 'number')
@@ -107,18 +117,11 @@ describe('Agent', _ => {
         assert(typeof proc.cpu === 'number')
         assert(typeof proc.memory === 'number')
         assert(proc.versioning === null)
-        assert(proc.node_env === 'TEST')
+        assert(proc.node_env === 'test')
         assert(Array.isArray(proc.axm_actions))
         assert(typeof proc.axm_monitor === 'object')
         assert(typeof proc.axm_options === 'object')
         assert(typeof proc.axm_dynamic === 'object')
-        return next(done)
-      })
-    })
-    it('should return process', (done) => {
-      createAgent((agent, next) => {
-        let proc = agent.generateProcess(agent.process)
-        assert(proc.created_at === date)
         return next(done)
       })
     })
@@ -132,11 +135,5 @@ describe('Agent', _ => {
         return next(done)
       })
     })
-  })
-  describe('checkCredentials', _ => {
-
-  })
-  describe('sendStatus', _ => {
-
   })
 })
