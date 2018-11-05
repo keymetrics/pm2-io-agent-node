@@ -15,7 +15,6 @@ describe('Transporter', _ => {
   let conn = null
 
   let transporter = null
-  let proxyServer = null
 
   before(() => {
     wss = new ws.Server({ port: 64000 })
@@ -127,5 +126,14 @@ describe('Transporter', _ => {
       })
       conn.send(JSON.stringify({ channel: 'test-2', payload: true }))
     })
+
+    after(() => {
+      proxyServer.close()
+    })
+  })
+
+  after(() => {
+    transporter.disconnect()
+    wss.close()
   })
 })

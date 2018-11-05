@@ -20,6 +20,7 @@ const createAgent = (proc, cb) => {
   let agent = new Agent(config, proc || {})
   return cb(agent, next => {
     Agent.prototype.checkCredentials = tmp
+    agent.stop()
     next()
   })
 }
@@ -43,8 +44,10 @@ describe('Agent', _ => {
       assert(!(agent instanceof Error))
       agent.start().then(e => {
         console.log(e)
+        agent.stop()
         done(new Error('agent started'))
       }).catch(err => {
+        agent.stop()
         assert(err instanceof Error)
         done()
       })
@@ -58,8 +61,10 @@ describe('Agent', _ => {
       let agent = new Agent({publicKey: 'public', secretKey: 'secret', appName: 'app'}, {})
       assert(!(agent instanceof Error))
       agent.start().then(_ => {
+        agent.stop()
         done(new Error('correctly connected'))
       }).catch(err => {
+        agent.stop()
         assert(err instanceof Error)
         done()
       })
@@ -82,6 +87,7 @@ describe('Agent', _ => {
         assert(typeof agent.process.unique_id === 'string')
         clearInterval(agent.statusInterval)
         Agent.prototype.checkCredentials = tmp
+        agent.stop()
         done()
       }).catch(err => {
         done(err)
