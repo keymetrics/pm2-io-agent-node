@@ -1,6 +1,7 @@
 'use strict'
 
 const url = require('url')
+const ProxyAgent = require('proxy-agent')
 
 /**
  * HTTP wrapper
@@ -29,7 +30,8 @@ module.exports = class HTTPClient {
       hostname: parsedUrl.hostname,
       path: parsedUrl.path,
       port: parsedUrl.port,
-      method: opts.method
+      method: opts.method,
+      agent: opts.proxy !== undefined ? new ProxyAgent(opts.proxy) : undefined
     }
     if (opts.data) {
       data = JSON.stringify(opts.data)
