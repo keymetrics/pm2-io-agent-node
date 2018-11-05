@@ -137,7 +137,12 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
    */
   disconnect () {
     debug('Disconnect from websocket server')
-    return this.ws.close()
+    if (this.pingInterval) clearInterval(this.pingInterval)
+    if (this.ws) {
+      this.ws.removeAllListeners('close')
+      this.ws.removeAllListeners('error')
+      return this.ws.close()
+    }
   }
 
   /**
