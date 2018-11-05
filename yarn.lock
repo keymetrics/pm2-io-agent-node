@@ -1414,7 +1414,7 @@ util-deprecate@~1.0.1:
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha1-RQ1Nyfpw3nMnYvvS1KKJgUGaDM8=
 
-v8-coverage@^1.0.7:
+v8-coverage@^1.0.5:
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/v8-coverage/-/v8-coverage-1.0.7.tgz#f005d81ee44ad14ae1ab901f093e49ff331f6c49"
   integrity sha512-satFpBKxSV/VsWcHwj1RlvILMbMWqz7zATgTRwD9fCZF4hoDshKHWcZ2JNnvLImWaPzvyNW2bKEhTSWIhnmlKA==
