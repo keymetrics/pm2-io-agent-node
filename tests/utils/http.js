@@ -59,6 +59,7 @@ describe('HTTP wrapper', () => {
         })
       ], (err) => {
         if (err) return done(err)
+        proxyServer.close()
         return server.close(done)
       })
     })
