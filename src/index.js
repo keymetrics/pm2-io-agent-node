@@ -43,6 +43,8 @@ module.exports = class Agent {
    */
   async start () {
     return new Promise((resolve, reject) => {
+      if (this.isStopping) return reject(new Error('Agent is stopping'))
+
       // Trying to check infos
       this.checkCredentials(this.config, (err, endpoints) => {
         if (err) {
@@ -85,8 +87,13 @@ module.exports = class Agent {
    * Restart agent because of an error
    */
   restartOnError (err) {
+    if (this.isStopping) return
+
     debug(`Got an error on start pm2-agent-node: ${err.message}, retrying in 5sec...`)
-      return setTimeout(this.start.bind(this), 5 * 1000)
+    return setTimeout(() => {
+      // Error already handled in start function
+      this.start().catch(_ => {})
+    }, 5 * 1000)
   }
 
   /**
@@ -275,5 +282,16 @@ module.exports = class Agent {
         rev_con: true
       }
     })
+  }
+
+  /**
+   * Stop agent
+   */
+  stop () {
+    debug('Stopping agent')
+    this.isStopping = true
+    this.transport.disconnect()
+    clearInterval(this.statusInterval)
+    clearInterval(this.endpointUpdateInterval)
   }
 }
