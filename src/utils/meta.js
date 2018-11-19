@@ -94,5 +94,5 @@ const getCpuUsage = _ => {
 module.exports.getCpuUsage = getCpuUsage
 
 module.exports.getMemoryUsage = _ => {
-  return Math.floor(process.memoryUsage().heapUsed)
+  return Math.floor(process.memoryUsage().rss)
 }
