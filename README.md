@@ -4,7 +4,7 @@ This module is used by [@pm2/io](https://github.com/keymetrics/pm2-io-apm) to co
 
 This module is using [websocket](https://github.com/websockets/ws) to send and receive data from websocket server.
 
-**NOTE:** This module is only compatible with node >= 8
+**NOTE:** This module is only compatible with node >= 6
 
 ## How to use
 
