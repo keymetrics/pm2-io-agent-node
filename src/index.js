@@ -41,7 +41,7 @@ module.exports = class Agent {
   /**
    * Check credentials and start agent
    */
-  async start () {
+  start () {
     return new Promise((resolve, reject) => {
       if (this.isStopping) return reject(new Error('Agent is stopping'))
 
@@ -197,18 +197,17 @@ module.exports = class Agent {
    * @param {String} channel
    * @param {Object} payload
    */
-  async send (channel, payload) {
+  send (channel, payload) {
     return this.transport.send({
       channel,
-      payload: {
-        ...payload,
+      payload: Object.assign(payload, {
         process: {
           pm_id: 0,
           name: this.config.appName,
           server: this.config.serverName,
           rev: null
         }
-      }
+      })
     })
   }
 
@@ -269,7 +268,7 @@ module.exports = class Agent {
   /**
    * Send status
    */
-  async sendStatus () {
+  sendStatus () {
     return this.transport.send({
       channel: 'status',
       payload: {
