@@ -102,6 +102,7 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
    * Try to ping server, if we get no response, disconnect and try to reconnect
    */
   ping () {
+    if (!this.isConnected()) return
     const noResponse = _ => {
       clearTimeout(timeout)
       debug('We can\'t get any response to ping from websocket server, trying to reconnect')
@@ -128,7 +129,13 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
   send (packet) {
     if (!this.isConnected()) return false
     if (!packet.channel || !packet.payload) return false
-    this.ws.send(JSON.stringify(packet))
+    try {
+      this.ws.send(JSON.stringify(packet))
+    } catch (err) {
+      debug(`Failed to send packet: ${err.message}`)
+      console.log(err)
+      return false
+    }
     return true
   }
 
