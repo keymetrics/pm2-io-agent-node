@@ -20,6 +20,7 @@ module.exports = class HTTPClient {
    * @param {String} opts.url
    * @param {String} opts.method
    * @param {Object} [opts.data]
+   * @param {Object} [opts.headers]
    * @param {Function} cb invoked with <err, body>
    */
   static open (opts, cb) {
@@ -31,7 +32,8 @@ module.exports = class HTTPClient {
       path: parsedUrl.path,
       port: parsedUrl.port,
       method: opts.method,
-      agent: opts.proxy !== undefined ? new ProxyAgent(opts.proxy) : undefined
+      agent: opts.proxy !== undefined ? new ProxyAgent(opts.proxy) : undefined,
+      headers: opts.headers
     }
     if (opts.data) {
       data = JSON.stringify(opts.data)

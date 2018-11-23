@@ -5,6 +5,7 @@ const os = require('os')
 const http = require('./utils/http')
 const cst = require('../constants')
 const meta = require('./utils/meta')
+const version = require('../package.json').version
 const Transport = require('./transport')
 
 module.exports = class Agent {
@@ -58,7 +59,8 @@ module.exports = class Agent {
           'X-KM-SECRET': this.config.secretKey,
           'X-KM-SERVER': this.config.serverName,
           'X-PM2-VERSION': cst.PM2_VERSION,
-          'X-PROTOCOL-VERSION': cst.PROTOCOL_VERSION
+          'X-PROTOCOL-VERSION': cst.PROTOCOL_VERSION,
+          'User-Agent': `PM2 Agent Node v${version}`
         }, this.config.proxy)
         return this.transport.connect((err) => {
           if (err) {
@@ -182,7 +184,10 @@ module.exports = class Agent {
         private_id: config.secretKey,
         data: meta(config.publicKey, config.serverName)
       },
-      proxy: config.proxy
+      proxy: config.proxy,
+      headers: {
+        'User-Agent': `PM2 Agent Node v${version}`
+      }
     }, (err, data) => {
       if (err) return cb(err)
       if (data.disabled === true || data.pending === true) return cb(new Error('Interactor disabled.'))
