@@ -103,7 +103,7 @@ describe('Transporter', _ => {
         assert(proxyClients === 1)
         done()
       })
-      transporter.connect()
+      transporter.connect(_ => {})
     })
 
     it('should send message correctly', done => {

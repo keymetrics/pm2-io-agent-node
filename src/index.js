@@ -15,7 +15,8 @@ module.exports = class Agent {
    * @param {String} config.publicKey
    * @param {String} config.secretKey
    * @param {String} config.appName
-   * @param {String} [config.serverName]
+   * @param {String} [config.serverName] Will be hostname if not provided
+   * @param {String} [config.logFilter] RegExp used to filter logs
    * @param {Object} process Process to send
    */
   constructor (config, proc) {
@@ -32,11 +33,27 @@ module.exports = class Agent {
     debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
     if (!config.serverName) config.serverName = os.hostname().toLowerCase()
     this.config = config
+    if (this.config.logFilter && !(this.config.logFilter instanceof RegExp)) {
+      this.config.logFilter = new RegExp(this.config.logFilter)
+    }
     proc.unique_id = this.generateUniqueId()
     this.process = proc
     this.sendLogs = false // Options to override startLogging and stopLogging
+    this.methods = { // Used to destruct
+      processOutWrite: process.stdout.write,
+      processErrWrite: process.stderr.write
+    }
     // Init transport (listen event emitter even if an error occur)
     this.transport = new Transport()
+  }
+
+  /**
+   * Used to destruct agent
+   */
+  destruct () {
+    this.stop()
+    process.stdout.write = this.methods.processOutWrite
+    process.stderr.write = this.methods.processErrWrite
   }
 
   /**
@@ -247,10 +264,12 @@ module.exports = class Agent {
     })
 
     // Listen logs
+    const self = this
     process.stdout.write = (function (write) {
       return function (...args) {
         write.apply(process.stdout, args)
-        if (!this.sendLogs && !sendLogs) return // Don't send logs
+        if (!self.sendLogs && !sendLogs) return // Don't send logs
+        if (self.config.logFilter && !self.config.logFilter.test(args[0])) return
         send({
           at: new Date().getTime(),
           data: args[0]
@@ -261,7 +280,8 @@ module.exports = class Agent {
     process.stderr.write = (function (write) {
       return function (...args) {
         write.apply(process.stderr, args)
-        if (!this.sendLogs && !sendLogs) return // Don't send logs
+        if (!self.sendLogs && !sendLogs) return // Don't send logs
+        if (self.config.logFilter && !self.config.logFilter.test(args[0])) return
         send({
           at: new Date().getTime(),
           data: args[0]

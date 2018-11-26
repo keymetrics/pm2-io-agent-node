@@ -20,7 +20,7 @@ const createAgent = (proc, cb) => {
   let agent = new Agent(config, proc || {})
   return cb(agent, next => {
     Agent.prototype.checkCredentials = tmp
-    agent.stop()
+    agent.destruct()
     next()
   })
 }
@@ -44,10 +44,10 @@ describe('Agent', _ => {
       assert(!(agent instanceof Error))
       agent.start().then(e => {
         console.log(e)
-        agent.stop()
+        agent.destruct()
         done(new Error('agent started'))
       }).catch(err => {
-        agent.stop()
+        agent.destruct()
         assert(err instanceof Error)
         done()
       })
@@ -61,10 +61,10 @@ describe('Agent', _ => {
       let agent = new Agent({publicKey: 'public', secretKey: 'secret', appName: 'app'}, {})
       assert(!(agent instanceof Error))
       agent.start().then(_ => {
-        agent.stop()
+        agent.destruct()
         done(new Error('correctly connected'))
       }).catch(err => {
-        agent.stop()
+        agent.destruct()
         assert(err instanceof Error)
         done()
       })
@@ -87,7 +87,7 @@ describe('Agent', _ => {
         assert(typeof agent.process.unique_id === 'string')
         clearInterval(agent.statusInterval)
         Agent.prototype.checkCredentials = tmp
-        agent.stop()
+        agent.destruct()
         done()
       }).catch(err => {
         done(err)
@@ -140,6 +140,96 @@ describe('Agent', _ => {
         assert(proc.axm_actions[0].action_name === 'test')
         return next(done)
       })
+    })
+  })
+  describe('listenForLogs', _ => {
+    const config = {publicKey: 'public', secretKey: 'secret', appName: 'app'}
+    it('should send stdout logs', (done) => {
+      const agent = new Agent(config, {})
+      agent.sendLogs = true
+      agent.send = (channel, data) => {
+        assert(channel === 'logs')
+        assert(data.data === 'log line\n')
+        agent.destruct()
+        return done()
+      }
+      agent.listenForLogs()
+      console.log('log line')
+    })
+    it('should send stderr logs', (done) => {
+      const agent = new Agent(config, {})
+      agent.sendLogs = true
+      agent.send = (channel, data) => {
+        assert(channel === 'logs')
+        assert(data.data === 'log line\n')
+        agent.destruct()
+        return done()
+      }
+      agent.listenForLogs()
+      console.error('log line')
+    })
+    it("shouldn't send logs", (done) => {
+      const agent = new Agent(config, {})
+      agent.sendLogs = false
+      agent.send = (channel, data) => {
+        assert(false)
+      }
+      agent.listenForLogs()
+      console.log('log line')
+      setTimeout(_ => {
+        agent.destruct()
+        return done()
+      }, 1000)
+    })
+    it("shouldn't send unmatched logs", (done) => {
+      const agent = new Agent(Object.assign({logFilter: 'unmatch'}, config), {})
+      agent.sendLogs = true
+      agent.send = (channel, data) => {
+        assert(false)
+      }
+      agent.listenForLogs()
+      console.log('log line')
+      setTimeout(_ => {
+        agent.destruct()
+        return done()
+      }, 1000)
+    })
+    it("shouldn't send unmatched logs", (done) => {
+      const agent = new Agent(Object.assign({logFilter: 'unmatch'}, config), {})
+      agent.sendLogs = true
+      agent.send = (channel, data) => {
+        assert(false)
+      }
+      agent.listenForLogs()
+      console.error('log line')
+      setTimeout(_ => {
+        agent.destruct()
+        return done()
+      }, 1000)
+    })
+    it('should send matched logs', (done) => {
+      const agent = new Agent(Object.assign({logFilter: 'log'}, config), {})
+      agent.sendLogs = true
+      agent.send = (channel, data) => {
+        assert(channel === 'logs')
+        assert(data.data === 'log line\n')
+        agent.destruct()
+        return done()
+      }
+      agent.listenForLogs()
+      console.log('log line')
+    })
+    it('should send matched logs', (done) => {
+      const agent = new Agent(Object.assign({logFilter: 'log'}, config), {})
+      agent.sendLogs = true
+      agent.send = (channel, data) => {
+        assert(channel === 'logs')
+        assert(data.data === 'log line\n')
+        agent.destruct()
+        return done()
+      }
+      agent.listenForLogs()
+      console.error('log line')
     })
   })
 })

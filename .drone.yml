@@ -13,6 +13,7 @@ pipeline:
       - cov8 clear
       - cov8 mocha tests/utils/http.js
       - cov8 mocha tests/index.js
+      - cov8 mocha tests/transport.js
       - cov8 report lcov
       - ./cc-test-reporter after-build --exit-code 0 || echo “Skipping CC coverage upload” or upload-coverage || echo “Skipping CC coverage upload”
     secrets: [ cc_test_reporter_id ]
