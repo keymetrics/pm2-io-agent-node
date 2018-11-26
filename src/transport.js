@@ -18,6 +18,8 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
     this.headers = null
     this.ws = null
     this.pingInterval = null
+    this.buffer = []
+    this.maxBufferLength = 100000
   }
 
   /**
@@ -64,6 +66,7 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
       this.ws.on('error', err => debug(`Got an error with websocket connection: ${err.message}`))
       if (this.pingInterval) clearInterval(this.pingInterval)
       this.pingInterval = setInterval(this.ping.bind(this), 30 * 1000) // 30 seconds
+      this.clearBuffer()
       return cb(null, this.ws)
     })
     this.ws.on('ping', _ => {
@@ -125,18 +128,39 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
   /**
    * Send data to websocket server
    * @param {Object} packet Packet to send (send with JSON)
+   * @return {Boolean} success
    */
   send (packet) {
-    if (!this.isConnected()) return false
     if (!packet.channel || !packet.payload) return false
+    if (!this.isConnected()) {
+      this.bufferPacket(packet)
+      return false
+    }
     try {
       this.ws.send(JSON.stringify(packet))
     } catch (err) {
       debug(`Failed to send packet: ${err.message}`)
       console.log(err)
+      this.bufferPacket(packet)
       return false
     }
     return true
+  }
+
+  /**
+   * Packet couldn't be send, so buffer it into an array
+   * @param {Object} packet Packet to send (send with JSON)
+   */
+  bufferPacket (packet) {
+    if (this.buffer.length > this.maxBufferLength) this.buffer.pop()
+    this.buffer.push(packet)
+  }
+
+  /**
+   * Send every packet stored in buffer
+   */
+  clearBuffer () {
+    this.buffer.forEach(this.send.bind(this))
   }
 
   /**
