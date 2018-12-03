@@ -220,6 +220,7 @@ module.exports = class Agent {
    * @param {Object} payload
    */
   send (channel, payload) {
+    if (payload.at === undefined) payload.at = Date.now()
     return this.transport.send({
       channel,
       payload: Object.assign(payload, {
