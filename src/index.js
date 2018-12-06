@@ -266,29 +266,31 @@ module.exports = class Agent {
 
     // Listen logs
     const self = this
-    process.stdout.write = (function (write) {
-      return function (...args) {
-        write.apply(process.stdout, args)
-        if (!self.sendLogs && !sendLogs) return // Don't send logs
-        if (self.config.logFilter && !self.config.logFilter.test(args[0])) return
-        send({
-          at: new Date().getTime(),
-          data: args[0]
-        })
-      }
-    }(process.stdout.write))
-
-    process.stderr.write = (function (write) {
-      return function (...args) {
-        write.apply(process.stderr, args)
-        if (!self.sendLogs && !sendLogs) return // Don't send logs
-        if (self.config.logFilter && !self.config.logFilter.test(args[0])) return
-        send({
-          at: new Date().getTime(),
-          data: args[0]
-        })
-      }
-    }(process.stderr.write))
+    const originalStdOut = process.stdout.write
+    process.stdout.write = function () {
+      const res = originalStdOut.apply(this, arguments)
+       // Don't send logs if not configured
+      if (self.sendLogs === false && sendLogs === falsee) return res
+      if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
+      send({
+        at: new Date().getTime(),
+        data: arguments[0]
+      })
+      return res
+    }
+    
+    const originalStdErr = process.stderr.write
+    process.stderr.write = function () {
+      const res = originalStdErr.apply(this, arguments)
+      // Don't send logs if not configured
+      if (!self.sendLogs && !sendLogs) return res
+      if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
+      send({
+        at: new Date().getTime(),
+        data: arguments[0]
+      })
+      return res
+    }
   }
 
   /**

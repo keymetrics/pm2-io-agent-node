@@ -144,7 +144,7 @@ describe('Agent', _ => {
   })
   describe('listenForLogs', _ => {
     const config = {publicKey: 'public', secretKey: 'secret', appName: 'app'}
-    it('should send stdout logs', (done) => {
+    it('should send stdout logs (stdout)', (done) => {
       const agent = new Agent(config, {})
       agent.sendLogs = true
       agent.send = (channel, data) => {
@@ -156,7 +156,7 @@ describe('Agent', _ => {
       agent.listenForLogs()
       console.log('log line')
     })
-    it('should send stderr logs', (done) => {
+    it('should send stderr logs (stderr)', (done) => {
       const agent = new Agent(config, {})
       agent.sendLogs = true
       agent.send = (channel, data) => {
@@ -168,7 +168,7 @@ describe('Agent', _ => {
       agent.listenForLogs()
       console.error('log line')
     })
-    it("shouldn't send logs", (done) => {
+    it("shouldn't send logs (stdout)", (done) => {
       const agent = new Agent(config, {})
       agent.sendLogs = false
       agent.send = (channel, data) => {
@@ -181,7 +181,7 @@ describe('Agent', _ => {
         return done()
       }, 1000)
     })
-    it("shouldn't send unmatched logs", (done) => {
+    it("shouldn't send unmatched logs (stdout)", (done) => {
       const agent = new Agent(Object.assign({logFilter: 'unmatch'}, config), {})
       agent.sendLogs = true
       agent.send = (channel, data) => {
@@ -194,7 +194,7 @@ describe('Agent', _ => {
         return done()
       }, 1000)
     })
-    it("shouldn't send unmatched logs", (done) => {
+    it("shouldn't send unmatched logs (stderr)", (done) => {
       const agent = new Agent(Object.assign({logFilter: 'unmatch'}, config), {})
       agent.sendLogs = true
       agent.send = (channel, data) => {
@@ -207,7 +207,7 @@ describe('Agent', _ => {
         return done()
       }, 1000)
     })
-    it('should send matched logs', (done) => {
+    it('should send matched logs (stdout)', (done) => {
       const agent = new Agent(Object.assign({logFilter: 'log'}, config), {})
       agent.sendLogs = true
       agent.send = (channel, data) => {
@@ -219,7 +219,7 @@ describe('Agent', _ => {
       agent.listenForLogs()
       console.log('log line')
     })
-    it('should send matched logs', (done) => {
+    it('should send matched logs (stderr)', (done) => {
       const agent = new Agent(Object.assign({logFilter: 'log'}, config), {})
       agent.sendLogs = true
       agent.send = (channel, data) => {
