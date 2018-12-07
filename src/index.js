@@ -270,7 +270,7 @@ module.exports = class Agent {
     process.stdout.write = function () {
       const res = originalStdOut.apply(this, arguments)
        // Don't send logs if not configured
-      if (self.sendLogs === false && sendLogs === falsee) return res
+      if (self.sendLogs === false && sendLogs === false) return res
       if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
       send({
         at: new Date().getTime(),
