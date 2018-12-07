@@ -232,7 +232,7 @@ describe('Agent', _ => {
       console.error('log line')
     })
 
-    it('should send logs with reverse action', (done) => {
+    it('should send logs with reverse action (stdout)', (done) => {
       const agent = new Agent(config, {})
       agent.send = (channel, data) => {
         assert(channel === 'logs')
@@ -245,6 +245,21 @@ describe('Agent', _ => {
         method_name: 'startLogging'
       })
       console.log('log line')
+    })
+
+    it('should send logs with reverse action (stderr)', (done) => {
+      const agent = new Agent(config, {})
+      agent.send = (channel, data) => {
+        assert(channel === 'logs')
+        assert(data.data === 'log line\n')
+        agent.destruct()
+        return done()
+      }
+      agent.listenForLogs()
+      agent.transport.emit('trigger:pm2:action', {
+        method_name: 'startLogging'
+      })
+      console.error('log line')
     })
   })
 })
