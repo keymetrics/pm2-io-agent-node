@@ -38,7 +38,8 @@ module.exports = class Agent {
     }
     proc.unique_id = this.generateUniqueId()
     this.process = proc
-    this.sendLogs = false // Options to override startLogging and stopLogging
+    // Options to continously send logs to remote endpoint
+    this.sendLogs = typeof config === 'object' && typeof config.sendLogs === 'boolean' ? config.sendLogs : false 
     this.methods = { // Used to destruct
       processOutWrite: process.stdout.write,
       processErrWrite: process.stderr.write
@@ -239,14 +240,14 @@ module.exports = class Agent {
    */
   listenForLogs () {
     const send = this.send.bind(this, 'logs')
-    let sendLogs = false // used for startLogging and stopLogging
+    let isTemporalyLogging = false // used for startLogging and stopLogging
 
     // Listen actions
     const reply = method => {
       this.transport.send({
         channel: 'trigger:pm2:result',
         payload: {
-          ret: { err: null, data: `Log streaming ${sendLogs ? 'enabled' : 'disabled'}` },
+          ret: { err: null, data: `Log streaming ${isTemporalyLogging ? 'enabled' : 'disabled'}` },
           meta: {
             method_name: method,
             app_name: this.config.appName,
@@ -259,7 +260,7 @@ module.exports = class Agent {
     this.transport.on('trigger:pm2:action', (data) => {
       const method = data.method_name
       if (!['startLogging', 'stopLogging'].includes(method)) return // Don't listen that
-      sendLogs = method === 'startLogging'
+      isTemporalyLogging = method === 'startLogging'
       debug(`${method} triggered`)
       return reply(method)
     })
@@ -270,7 +271,7 @@ module.exports = class Agent {
     process.stdout.write = function () {
       const res = originalStdOut.apply(this, arguments)
        // Don't send logs if not configured
-      if (self.sendLogs === false && sendLogs === false) return res
+      if (!self.sendLogs && isTemporalyLogging === false) return res
       if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
       send({
         at: new Date().getTime(),
@@ -283,7 +284,7 @@ module.exports = class Agent {
     process.stderr.write = function () {
       const res = originalStdErr.apply(this, arguments)
       // Don't send logs if not configured
-      if (!self.sendLogs && !sendLogs) return res
+      if (!self.sendLogs && isTemporalyLogging === false) return res
       if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
       send({
         at: new Date().getTime(),
