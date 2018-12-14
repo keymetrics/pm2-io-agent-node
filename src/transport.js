@@ -4,6 +4,7 @@ const WebSocket = require('ws')
 const EventEmitter2 = require('eventemitter2').EventEmitter2
 const ProxyAgent = require('proxy-agent')
 const debug = require('debug')('agent:transport')
+const fs = require('fs')
 
 module.exports = class WebsocketTransport extends EventEmitter2 {
   /**
@@ -139,8 +140,8 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
     try {
       this.ws.send(JSON.stringify(packet))
     } catch (err) {
-      debug(`Failed to send packet: ${err.message}`)
-      console.log(err)
+      // avoid `Maximum call stack size exceeded` if we fail to send some logs
+      if (process.env.DEBUG) fs.writeSync(process.stdout.fd, `Failed to send packet: ${err.message}\n`)
       this.bufferPacket(packet)
       return false
     }
