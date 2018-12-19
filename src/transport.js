@@ -106,7 +106,7 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
    * Try to ping server, if we get no response, disconnect and try to reconnect
    */
   ping () {
-    if (!this.isConnected()) return
+    if (this.isReconnecting()) return
     const noResponse = _ => {
       clearTimeout(timeout)
       debug('We can\'t get any response to ping from websocket server, trying to reconnect')
@@ -182,5 +182,12 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
    */
   isConnected () {
     return this.ws && this.ws.readyState < 2 // Connected or connecting
+  }
+
+  /**
+   * Return if webcheck is trying to connect or not
+   */
+  isReconnecting () {
+    return this.ws && this.ws.readyState === this.ws.CONNECTING
   }
 }
