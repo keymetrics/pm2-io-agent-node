@@ -68,9 +68,12 @@ describe('Transporter', _ => {
       conn.send(JSON.stringify({ channel: 'test-2', payload: true }))
     })
 
-    it('should disconnect correctly', () => {
+    it('should disconnect correctly', (done) => {
       transporter.disconnect()
-      // TODO: check disconnection on WSS
+      setTimeout(_ => {
+        assert(wss.clients.size === 0)
+        return done()
+      }, 500)
     })
   })
 

@@ -43,13 +43,11 @@ describe('Agent', _ => {
       let agent = new Agent({publicKey: 'public', secretKey: 'secret', appName: 'app'}, {})
       assert(!(agent instanceof Error))
       agent.start().then(e => {
-        console.log(e)
         agent.destruct()
-        done(new Error('agent started'))
+        done()
       }).catch(err => {
         agent.destruct()
-        assert(err instanceof Error)
-        done()
+        done(err)
       })
       Agent.prototype.checkCredentials = tmp
     })
@@ -62,11 +60,10 @@ describe('Agent', _ => {
       assert(!(agent instanceof Error))
       agent.start().then(_ => {
         agent.destruct()
-        done(new Error('correctly connected'))
+        done()
       }).catch(err => {
         agent.destruct()
-        assert(err instanceof Error)
-        done()
+        done(err)
       })
       Agent.prototype.checkCredentials = tmp
     })

@@ -20,7 +20,7 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
     this.ws = null
     this.pingInterval = null
     this.buffer = []
-    this.maxBufferLength = 100000
+    this.maxBufferLength = 500
   }
 
   /**
@@ -58,6 +58,10 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
       this.ws.removeAllListeners()
       return cb(err)
     }
+    this.ws.once('unexpected-response', (req, res) => {
+      debug(`Got a ${res.statusCode} on handshake. Retrying in 5 sec`)
+      return cb(new Error(`Handshake failed with ${res.statusCode} HTTP Code.`))
+    })
     this.ws.once('error', onError)
     this.ws.once('open', _ => {
       debug('Websocket connected')

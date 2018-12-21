@@ -39,7 +39,7 @@ module.exports = class Agent {
     proc.unique_id = this.generateUniqueId()
     this.process = proc
     // Options to continously send logs to remote endpoint
-    this.sendLogs = typeof config === 'object' && typeof config.sendLogs === 'boolean' ? config.sendLogs : false 
+    this.sendLogs = typeof config === 'object' && typeof config.sendLogs === 'boolean' ? config.sendLogs : false
     this.methods = { // Used to destruct
       processOutWrite: process.stdout.write,
       processErrWrite: process.stderr.write
@@ -68,7 +68,7 @@ module.exports = class Agent {
       this.checkCredentials(this.config, (err, endpoints) => {
         if (err) {
           this.restartOnError(err)
-          return reject(err)
+          return resolve() // avoid reject if we retry
         }
 
         // Connect to websocket
@@ -83,7 +83,7 @@ module.exports = class Agent {
         return this.transport.connect((err) => {
           if (err) {
             this.restartOnError(err)
-            return reject(err)
+            return resolve() // avoid reject if we retry
           }
 
           // Store config
@@ -270,7 +270,7 @@ module.exports = class Agent {
     const originalStdOut = process.stdout.write
     process.stdout.write = function () {
       const res = originalStdOut.apply(this, arguments)
-       // Don't send logs if not configured
+      // Don't send logs if not configured
       if (!self.sendLogs && isTemporalyLogging === false) return res
       if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
       send({
@@ -279,7 +279,7 @@ module.exports = class Agent {
       })
       return res
     }
-    
+
     const originalStdErr = process.stderr.write
     process.stderr.write = function () {
       const res = originalStdErr.apply(this, arguments)
