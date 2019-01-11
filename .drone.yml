@@ -14,12 +14,13 @@ pipeline:
       - cov8 mocha tests/utils/http.js
       - cov8 mocha tests/index.js
       - cov8 mocha tests/transport.js
+      - cov8 mocha tests/transport.reconnect.js
       - cov8 report lcov
       - ./cc-test-reporter after-build --exit-code 0 || echo “Skipping CC coverage upload” or upload-coverage || echo “Skipping CC coverage upload”
     secrets: [ cc_test_reporter_id ]
   slack:
     image: plugins/slack
-    channel: ci
+    channel: dev-stream-ci
     status: [ success, failure ]
     template: |
       {{#success build.status}}

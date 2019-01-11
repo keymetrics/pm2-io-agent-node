@@ -80,16 +80,12 @@ describe('Transporter', _ => {
   describe('With proxy', _ => {
     let proxyServer = null
     let proxyClients = 0
-    let proxyTotalClients = 0
-    let proxyLastConn = null
 
     before(() => {
       proxyServer = socks.createServer().listen(1080)
 
       proxyServer.on('proxyConnect', (info) => {
-        proxyLastConn = info
         proxyClients++
-        proxyTotalClients++
       })
       proxyServer.on('proxyEnd', _ => {
         proxyClients--
