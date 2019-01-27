@@ -62,6 +62,7 @@ describe('Transporter', _ => {
   })
 
   it('should reconnect if connection is closed and backend unavailable', function (done) {
+    if (parseInt(process.env.NODE_VERSION) < 10) return done()
     this.timeout(10000)
     wss.close(_ => {
       const server = http.createServer(function (req, res) {
@@ -80,6 +81,7 @@ describe('Transporter', _ => {
   })
 
   it('should send message correctly', done => {
+    if (parseInt(process.env.NODE_VERSION) < 10) return done()
     transporter.send({
       channel: 'test',
       payload: true
@@ -93,6 +95,7 @@ describe('Transporter', _ => {
   })
 
   it('should reconnect if port is not binded', function (done) {
+    if (parseInt(process.env.NODE_VERSION) < 10) return done()
     this.timeout(10000)
     wss.close()
     setTimeout(_ => {
@@ -105,6 +108,7 @@ describe('Transporter', _ => {
   })
 
   it('should send message correctly', done => {
+    if (parseInt(process.env.NODE_VERSION) < 10) return done()
     transporter.send({
       channel: 'test',
       payload: true
