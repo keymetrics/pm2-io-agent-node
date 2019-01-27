@@ -54,17 +54,25 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
       return cb(e)
     }
 
+    const timeout = setTimeout(_ => { // We use this to avoid #9
+      this.ws.removeAllListeners()
+      this.ws.close()
+      return cb(new Error('Connect timeout.'))
+    }, 6 * 1000) // 6 sec max
     const onError = (err) => {
+      clearTimeout(timeout)
       this.ws.removeAllListeners()
       return cb(err)
     }
     this.ws.once('unexpected-response', (req, res) => {
+      clearTimeout(timeout)
       debug(`Got a ${res.statusCode} on handshake. Retrying in 5 sec`)
       return cb(new Error(`Handshake failed with ${res.statusCode} HTTP Code.`))
     })
     this.ws.once('error', onError)
     this.ws.once('open', _ => {
       debug('Websocket connected')
+      clearTimeout(timeout)
       this.ws.removeListener('error', onError)
       this.ws.on('close', this.onClose.bind(this))
       // We don't handle errors (DNS issues...), ping will close/reopen if any error is found
