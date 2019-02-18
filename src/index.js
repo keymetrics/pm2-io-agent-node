@@ -31,7 +31,10 @@ module.exports = class Agent {
       return err
     }
     debug(`New agent constructed with: [public: ${config.publicKey}, secret: ${config.secretKey}, app: ${config.appName}]`)
-    if (!config.serverName) config.serverName = os.hostname().toLowerCase()
+    if (!config.serverName) {
+      const hostname = os.hostname().toLowerCase()
+      config.serverName = `${hostname}-${this.generateUniqueId().substring(0, 6)}`
+    }
     this.config = config
     if (this.config.logFilter && !(this.config.logFilter instanceof RegExp)) {
       this.config.logFilter = new RegExp(this.config.logFilter)
