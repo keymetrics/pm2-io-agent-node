@@ -25,7 +25,7 @@ module.exports = class Agent {
       typeof config.publicKey !== 'string' ||
       typeof config.secretKey !== 'string' ||
       typeof config.appName !== 'string' ||
-      (typeof config.proxy !== 'undefined' && config.proxy !== 'string') ||
+      (typeof config.proxy !== 'undefined' && typeof config.proxy !== 'string') ||
       typeof proc !== 'object') {
       const err = new Error('You need to provide a valid configuration and process!')
       return err
