@@ -43,6 +43,7 @@ module.exports = class Agent {
     this.process = proc
     // Options to continously send logs to remote endpoint
     this.sendLogs = typeof config === 'object' && typeof config.sendLogs === 'boolean' ? config.sendLogs : false
+    this.disableLogs = typeof config === 'object' && typeof config.disableLogs === 'boolean' ? config.disableLogs : false
     this.methods = { // Used to destruct
       processOutWrite: process.stdout.write,
       processErrWrite: process.stderr.write
@@ -274,6 +275,7 @@ module.exports = class Agent {
     process.stdout.write = function () {
       const res = originalStdOut.apply(this, arguments)
       // Don't send logs if not configured
+      if (self.disableLogs) return res
       if (!self.sendLogs && isTemporalyLogging === false) return res
       if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
       send({
@@ -287,6 +289,7 @@ module.exports = class Agent {
     process.stderr.write = function () {
       const res = originalStdErr.apply(this, arguments)
       // Don't send logs if not configured
+      if (self.disableLogs) return res
       if (!self.sendLogs && isTemporalyLogging === false) return res
       if (self.config.logFilter && !self.config.logFilter.test(arguments[0])) return res
       send({
