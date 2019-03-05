@@ -37,10 +37,8 @@ module.exports = class HTTPClient {
     }
     if (opts.data) {
       data = JSON.stringify(opts.data)
-      options.headers = {
-        'Content-Type': 'application/json',
-        'Content-Length': data.length
-      }
+      options.headers['Content-Type'] = 'application/json'
+      options.headers['Content-Length'] = data.length
     }
     const req = http.request(options, (res) => {
       let body = ''

@@ -82,7 +82,8 @@ module.exports = class Agent {
           'X-KM-SERVER': this.config.serverName,
           'X-PM2-VERSION': cst.PM2_VERSION,
           'X-PROTOCOL-VERSION': cst.PROTOCOL_VERSION,
-          'User-Agent': `PM2 Agent Node v${version}`
+          'User-Agent': `PM2 Agent Node v${version}`,
+          'x-opencensus-outgoing-request': '1'
         }, this.config.proxy)
         return this.transport.connect((err) => {
           if (err) {
@@ -208,7 +209,8 @@ module.exports = class Agent {
       },
       proxy: config.proxy,
       headers: {
-        'User-Agent': `PM2 Agent Node v${version}`
+        'User-Agent': `PM2 Agent Node v${version}`,
+        'x-opencensus-outgoing-request': '1'
       }
     }, (err, data) => {
       if (err) return cb(err)
