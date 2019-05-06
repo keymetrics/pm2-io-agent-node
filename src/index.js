@@ -215,7 +215,11 @@ module.exports = class Agent {
     }, (err, data) => {
       if (err) return cb(err)
       if (data.disabled === true || data.pending === true) return cb(new Error('Interactor disabled.'))
-      if (data.active === false) return cb(new Error('Interactor not active.'))
+      if (data.active === false) {
+        this.stop()
+        debug(`Stop agent, bucket is not active: ${data.msg}`)
+        return cb(new Error('Interactor not active.'))
+      }
       if (!data.endpoints) return cb(new Error(`Endpoints field not present (${JSON.stringify(data)}).`))
       return cb(null, data.endpoints)
     })
