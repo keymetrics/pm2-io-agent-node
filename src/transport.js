@@ -56,12 +56,14 @@ module.exports = class WebsocketTransport extends EventEmitter2 {
 
     const onError = (err) => {
       this.ws.removeAllListeners()
+      this.ws.on('error', () => {}) // We need to cache error to avoid timeout after a response
+      this.ws.close()
       return cb(err)
     }
     this.ws.once('unexpected-response', (req, res) => {
       this.ws.readyState = this.ws.CLOSED
       debug(`Got a ${res.statusCode} on handshake. Retrying in 5 sec`)
-      return cb(new Error(`Handshake failed with ${res.statusCode} HTTP Code.`))
+      return onError(new Error(`Handshake failed with ${res.statusCode} HTTP Code.`))
     })
     this.ws.once('error', onError)
     this.ws.once('open', _ => {
